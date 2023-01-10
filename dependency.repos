@@ -1,12 +1,5 @@
 repositories:
   audio_common: # for audio_capture package
     type: git
-    url: https://github.com/ros-drivers/audio_common.git
-    version: ros2
-  generate_parameter_library:
-    type: git
-    url: https://github.com/PickNikRobotics/generate_parameter_library.git
-  rsl:
-    type: git
-    url: https://github.com/picknikrobotics/RSL
-    version: main
+    url: https://github.com/OUXT-Polaris/audio_common.git
+    version: prepare/humble
