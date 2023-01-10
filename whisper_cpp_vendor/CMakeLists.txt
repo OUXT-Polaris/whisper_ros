@@ -29,10 +29,16 @@ macro(build_whisper_cpp)
     DESTINATION
       ${CMAKE_INSTALL_PREFIX}
   )
+  install(
+    FILES 
+      ${CMAKE_CURRENT_BINARY_DIR}/whisper_cpp-ext-prefix/src/whisper_cpp-ext/ggml.h 
+      ${CMAKE_CURRENT_BINARY_DIR}/whisper_cpp-ext-prefix/src/whisper_cpp-ext/whisper.h
+    DESTINATION include
+  )
 endmacro()
 
 build_whisper_cpp()
-#ament_export_include_directories(include)
+ament_export_include_directories(include)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

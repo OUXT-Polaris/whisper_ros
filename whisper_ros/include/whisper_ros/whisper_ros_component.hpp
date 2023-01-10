@@ -17,6 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <whisper_ros/visibility_control.hpp>
+#include <whisper.h>
 
 namespace whisper_ros
 {
