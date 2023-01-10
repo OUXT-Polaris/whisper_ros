@@ -13,3 +13,14 @@
 // limitations under the License.
 
 #include <whisper_ros/whisper_ros_component.hpp>
+
+namespace whisper_ros
+{
+WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
+: Node("whisper_ros_node", options)
+{
+}
+}  // namespace whisper_ros
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(whisper_ros::WhisperRosComponent)

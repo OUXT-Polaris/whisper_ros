@@ -15,4 +15,17 @@
 #ifndef WHISPER_ROS__WHISPER_ROS_COMPONENT_HPP_
 #define WHISPER_ROS__WHISPER_ROS_COMPONENT_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <whisper_ros/visibility_control.hpp>
+
+namespace whisper_ros
+{
+class WhisperRosComponent : public rclcpp::Node
+{
+public:
+  COMPOSITION_PUBLIC
+  explicit WhisperRosComponent(const rclcpp::NodeOptions & options);
+};
+}  // namespace whisper_ros
+
 #endif  // WHISPER_ROS__WHISPER_ROS_COMPONENT_HPP_
