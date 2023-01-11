@@ -12,6 +12,7 @@ macro(build_whisper_cpp)
   set(cmake_commands)
   set(cmake_configure_args -Wno-dev)
   set(cmake_configure_args -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install)
+  set(WHISPER_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/whisper_cpp-ext-prefix/src/whisper_cpp-ext)
 
   include(ExternalProject)
   externalproject_add(whisper_cpp-ext
@@ -30,11 +31,11 @@ macro(build_whisper_cpp)
       ${CMAKE_INSTALL_PREFIX}
   )
   install(
-    FILES 
-      ${CMAKE_CURRENT_BINARY_DIR}/whisper_cpp-ext-prefix/src/whisper_cpp-ext/ggml.h 
-      ${CMAKE_CURRENT_BINARY_DIR}/whisper_cpp-ext-prefix/src/whisper_cpp-ext/whisper.h
+    FILES ${WHISPER_SRC_DIR}/ggml.h ${WHISPER_SRC_DIR}/whisper.h
     DESTINATION include
   )
+
+  unset(WHISPER_SRC_DIR)
 endmacro()
 
 build_whisper_cpp()
