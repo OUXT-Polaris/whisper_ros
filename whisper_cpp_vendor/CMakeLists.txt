@@ -15,7 +15,7 @@ macro(download_model MODEL_TYPE)
   )
   install(
     FILES ${WHISPER_SRC_DIR}/models/ggml-${MODEL_TYPE}.bin
-    DESTINATION models
+    DESTINATION share/models
   )
 endmacro()
 

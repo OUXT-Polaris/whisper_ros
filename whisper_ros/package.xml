@@ -10,6 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>ament_cmake_auto</depend>
+  <depend>ament_index_cpp</depend>
   <depend>audio_capture</depend>
   <depend>generate_parameter_library</depend>
   <depend>rclcpp_components</depend>

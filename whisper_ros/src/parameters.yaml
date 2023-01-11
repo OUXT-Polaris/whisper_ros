@@ -1,25 +1,42 @@
+# parameters comes from https://github.com/ggerganov/whisper.cpp/blob/4ef3398e8fe0c426de038b8c3816c6791a34a5ae/examples/main/main.cpp#L135-L165
 whisper_ros_node:
   n_threads:
     {
       type: int,
       default_value: 4,
       description: "number of threads to use during computation",
-      validation: { bounds<>: [1, 32] },
+      read_only: true,
+      validation: { lower_bounds<>: [1] },
     }
   n_processors:
     {
       type: int,
       default_value: 1,
       description: "number of processors to use during computation",
-      validation: { bounds<>: [1, 16] },
+      read_only: true,
+      validation: { lower_bounds<>: [1] },
     }
   offset_t_ms:
-    { type: int, default_value: 0, description: "time offset in milliseconds" }
-  offset_n: { type: int, default_value: 0, description: "segment index offset" }
+    {
+      type: int,
+      default_value: 0,
+      description: "time offset in milliseconds",
+      read_only: true,
+      validation: { lower_bounds<>: [0] },
+    }
+  offset_n:
+    {
+      type: int,
+      default_value: 0,
+      description: "segment index offset",
+      read_only: true,
+      validation: { lower_bounds<>: [0] },
+    }
   max_context:
     {
       type: int,
       default_value: -1,
+      read_only: true,
       description: "duration of audio to process in milliseconds",
     }
   max_len:
@@ -27,25 +44,67 @@ whisper_ros_node:
       type: int,
       default_value: 0,
       description: "maximum segment length in characters",
+      read_only: true,
+      validation: { lower_bounds<>: [0] },
     }
   word_thold:
     {
       type: double,
       default_value: 0.01,
+      read_only: true,
       description: "word timestamp probability threshold",
     }
-
-    # float word_thold = 0.01f;
-
-    # bool speed_up       = false;
-    # bool translate      = false;
-    # bool diarize        = false;
-    # bool output_txt     = false;
-    # bool output_vtt     = false;
-    # bool output_srt     = false;
-    # bool output_wts     = false;
-    # bool output_csv     = false;
-    # bool print_special  = false;
-    # bool print_colors   = false;
-    # bool print_progress = false;
-    # bool no_timestamps  = false;
+  speed_up:
+    {
+      type: bool,
+      default_value: false,
+      read_only: true,
+      description: "speed up audio by x2 (reduced accuracy)",
+    }
+  translate:
+    {
+      type: bool,
+      default_value: false,
+      read_only: true,
+      description: "translate from source language to english",
+    }
+  diarize:
+    {
+      type: bool,
+      default_value: false,
+      read_only: true,
+      description: "stereo audio diarization",
+    }
+  language:
+    {
+      type: string,
+      default_value: "en",
+      read_only: true,
+      description: "spoken language ('auto' for auto-detect)",
+    }
+  prompt: { type: string, default_value: "", description: "initial prompt" }
+  model_type:
+    {
+      type: string,
+      default_value: "base.en",
+      read_only: true,
+      description: "type of the model",
+      validation:
+        {
+          one_of<>:
+            [
+              [
+                "tiny.en",
+                "tiny",
+                "base.en",
+                "base",
+                "small.en",
+                "small",
+                "medium.en",
+                "medium",
+                "large-v1",
+                "large",
+              ],
+            ],
+        },
+    }

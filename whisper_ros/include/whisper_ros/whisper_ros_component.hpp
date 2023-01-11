@@ -17,7 +17,9 @@
 
 #include <whisper.h>
 
+#include <optional>
 #include <rclcpp/rclcpp.hpp>
+#include <whisper_parameters.hpp>
 #include <whisper_ros/visibility_control.hpp>
 
 namespace whisper_ros
@@ -27,6 +29,11 @@ class WhisperRosComponent : public rclcpp::Node
 public:
   COMPOSITION_PUBLIC
   explicit WhisperRosComponent(const rclcpp::NodeOptions & options);
+
+private:
+  std::optional<std::string> findModel() const;
+  bool checkLanguage() const;
+  const whisper_ros_node::Params parameters_;
 };
 }  // namespace whisper_ros
 
