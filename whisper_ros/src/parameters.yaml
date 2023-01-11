@@ -1,0 +1,51 @@
+whisper_ros_node:
+  n_threads:
+    {
+      type: int,
+      default_value: 4,
+      description: "number of threads to use during computation",
+      validation: { bounds<>: [1, 32] },
+    }
+  n_processors:
+    {
+      type: int,
+      default_value: 1,
+      description: "number of processors to use during computation",
+      validation: { bounds<>: [1, 16] },
+    }
+  offset_t_ms:
+    { type: int, default_value: 0, description: "time offset in milliseconds" }
+  offset_n: { type: int, default_value: 0, description: "segment index offset" }
+  max_context:
+    {
+      type: int,
+      default_value: -1,
+      description: "duration of audio to process in milliseconds",
+    }
+  max_len:
+    {
+      type: int,
+      default_value: 0,
+      description: "maximum segment length in characters",
+    }
+  word_thold:
+    {
+      type: double,
+      default_value: 0.01,
+      description: "word timestamp probability threshold",
+    }
+
+    # float word_thold = 0.01f;
+
+    # bool speed_up       = false;
+    # bool translate      = false;
+    # bool diarize        = false;
+    # bool output_txt     = false;
+    # bool output_vtt     = false;
+    # bool output_srt     = false;
+    # bool output_wts     = false;
+    # bool output_csv     = false;
+    # bool print_special  = false;
+    # bool print_colors   = false;
+    # bool print_progress = false;
+    # bool no_timestamps  = false;

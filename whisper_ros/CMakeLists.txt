@@ -9,8 +9,17 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+generate_parameter_library(
+  whisper_parameters
+  src/parameters.yaml
+)
+
 ament_auto_add_library(${PROJECT_NAME}_component SHARED 
   src/whisper_ros_component.cpp)
+
+target_link_libraries(${PROJECT_NAME}_component
+  whisper_parameters
+)
 
 rclcpp_components_register_nodes(${PROJECT_NAME}_component
  "whisper_ros::WhisperRosComponent")

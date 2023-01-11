@@ -15,9 +15,10 @@
 #ifndef WHISPER_ROS__WHISPER_ROS_COMPONENT_HPP_
 #define WHISPER_ROS__WHISPER_ROS_COMPONENT_HPP_
 
+#include <whisper.h>
+
 #include <rclcpp/rclcpp.hpp>
 #include <whisper_ros/visibility_control.hpp>
-#include <whisper.h>
 
 namespace whisper_ros
 {
