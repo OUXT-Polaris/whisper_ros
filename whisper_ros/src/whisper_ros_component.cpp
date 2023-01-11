@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <filesystem>
 #include <whisper_ros/whisper_ros_component.hpp>
 
 namespace whisper_ros
@@ -26,6 +27,17 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
       get_logger(), "Invalida language : " << parameters_.language << " specofied.");
     return;
   }
+  struct whisper_context * ctx;
+  if (const auto model_path = findModel()) {
+    ctx = whisper_init(model_path.value().c_str());
+  } else {
+    return;
+  }
+  if (ctx == nullptr) {
+    RCLCPP_ERROR_STREAM(get_logger(), "error: failed to initialize whisper context");
+    return;
+  }
+  const auto prompt_tokens = getPromptTokens(ctx);
 }
 
 bool WhisperRosComponent::checkLanguage() const
@@ -38,9 +50,28 @@ bool WhisperRosComponent::checkLanguage() const
 
 std::optional<std::string> WhisperRosComponent::findModel() const
 {
-  std::string model_path =
-    ament_index_cpp::get_package_share_directory("whisper_cpp_vendor") + "/share/models";
-  return model_path;
+  std::string model_path = ament_index_cpp::get_package_share_directory("whisper_cpp_vendor") +
+                           "/share/models/ggml-" + parameters_.model_type + ".bin";
+  if (std::filesystem::exists(model_path)) {
+    return model_path;
+  }
+  return std::nullopt;
+}
+
+std::vector<whisper_token> WhisperRosComponent::getPromptTokens(whisper_context * ctx) const
+{
+  std::vector<whisper_token> prompt_tokens;
+  if (!parameters_.prompt.empty()) {
+    prompt_tokens.resize(1024);
+    prompt_tokens.resize(whisper_tokenize(
+      ctx, parameters_.prompt.c_str(), prompt_tokens.data(), prompt_tokens.size()));
+    RCLCPP_INFO(get_logger(), "initial prompt: '%s'\n", parameters_.prompt.c_str());
+    RCLCPP_INFO(get_logger(), "initial tokens: [ ");
+    for (int i = 0; i < (int)prompt_tokens.size(); ++i) {
+      RCLCPP_INFO(get_logger(), "%d ", prompt_tokens[i]);
+    }
+  }
+  return prompt_tokens;
 }
 }  // namespace whisper_ros
 

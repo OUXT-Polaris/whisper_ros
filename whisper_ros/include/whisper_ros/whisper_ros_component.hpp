@@ -33,6 +33,7 @@ public:
 private:
   std::optional<std::string> findModel() const;
   bool checkLanguage() const;
+  std::vector<whisper_token> getPromptTokens(whisper_context * ctx) const;
   const whisper_ros_node::Params parameters_;
 };
 }  // namespace whisper_ros
