@@ -12,6 +12,7 @@
   <depend>ament_cmake_auto</depend>
   <depend>ament_index_cpp</depend>
   <depend>audio_capture</depend>
+  <depend>audio_common_msgs</depend>
   <depend>generate_parameter_library</depend>
   <depend>rclcpp_components</depend>
   <depend>rclcpp</depend>

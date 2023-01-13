@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <dr_wav.h>
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <filesystem>
 #include <whisper_ros/whisper_ros_component.hpp>
@@ -20,7 +22,8 @@ namespace whisper_ros
 {
 WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
 : Node("whisper_ros_node", options),
-  parameters_(whisper_ros_node::ParamListener(get_node_parameters_interface()).get_params())
+  parameters_(whisper_ros_node::ParamListener(get_node_parameters_interface()).get_params()),
+  buffer_(parameters_.audio_buffer_length, get_clock())
 {
   if (!checkLanguage()) {
     RCLCPP_ERROR_STREAM(
@@ -72,6 +75,67 @@ std::vector<whisper_token> WhisperRosComponent::getPromptTokens(whisper_context 
     }
   }
   return prompt_tokens;
+}
+
+void WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr msg)
+{
+  const auto wav_data = buffer_.append(msg);
+  drwav wav;
+  if (drwav_init_memory(&wav, wav_data.data(), wav_data.size(), nullptr) == false) {
+    RCLCPP_ERROR_STREAM(get_logger(), "Something wrong happens while reading wav data.");
+    return;
+  }
+  if (wav.channels != 1 && wav.channels != 2) {
+    RCLCPP_ERROR_STREAM(get_logger(), "Wav data must be mono or stereo.");
+    return;
+  }
+  if (parameters_.diarize && wav.channels != 2) {
+    RCLCPP_ERROR_STREAM(
+      get_logger(), "If you want to use stereo diarize, wav data must be mono or stereo.");
+    return;
+  }
+  const uint64_t n = wav_data.empty() ? wav.totalPCMFrameCount
+                                      : wav_data.size() / (wav.channels * wav.bitsPerSample / 8);
+  std::vector<int16_t> pcm16;
+  pcm16.resize(n * wav.channels);
+  drwav_read_pcm_frames_s16(&wav, n, pcm16.data());
+  drwav_uninit(&wav);
+
+  // convert to mono, float
+  std::vector<float> pcmf32;                // mono-channel F32 PCM
+  std::vector<std::vector<float>> pcmf32s;  // stereo-channel F32 PCM
+  pcmf32.resize(n);
+  if (wav.channels == 1) {
+    for (uint64_t i = 0; i < n; i++) {
+      pcmf32[i] = float(pcm16[i]) / 32768.0f;
+    }
+  } else {
+    for (uint64_t i = 0; i < n; i++) {
+      pcmf32[i] = float(pcm16[2 * i] + pcm16[2 * i + 1]) / 65536.0f;
+    }
+  }
+
+  if (parameters_.diarize) {
+    // convert to stereo, float
+    pcmf32s.resize(2);
+
+    pcmf32s[0].resize(n);
+    pcmf32s[1].resize(n);
+    for (uint64_t i = 0; i < n; i++) {
+      pcmf32s[0][i] = float(pcm16[2 * i]) / 32768.0f;
+      pcmf32s[1][i] = float(pcm16[2 * i + 1]) / 32768.0f;
+    }
+  }
+}
+
+void WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg)
+{
+  if (msg->sample_rate != WHISPER_SAMPLE_RATE) {
+    RCLCPP_ERROR_STREAM(get_logger(), "Sampling rate should be " << WHISPER_SAMPLE_RATE << " Hz");
+  }
+  if (msg->bitrate != 16) {
+    RCLCPP_ERROR_STREAM(get_logger(), "Bitrate should be 16");
+  }
 }
 }  // namespace whisper_ros
 

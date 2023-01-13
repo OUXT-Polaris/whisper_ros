@@ -42,7 +42,7 @@ macro(build_whisper_cpp)
       ${CMAKE_INSTALL_PREFIX}
   )
   install(
-    FILES ${WHISPER_SRC_DIR}/ggml.h ${WHISPER_SRC_DIR}/whisper.h
+    FILES ${WHISPER_SRC_DIR}/ggml.h ${WHISPER_SRC_DIR}/whisper.h ${WHISPER_SRC_DIR}/examples/dr_wav.h
     DESTINATION include
   )
   download_model(tiny.en)

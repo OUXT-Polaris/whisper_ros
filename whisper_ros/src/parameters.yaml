@@ -1,5 +1,13 @@
 # parameters comes from https://github.com/ggerganov/whisper.cpp/blob/4ef3398e8fe0c426de038b8c3816c6791a34a5ae/examples/main/main.cpp#L135-L165
 whisper_ros_node:
+  audio_buffer_length:
+    {
+      type: int,
+      default_value: 16384,
+      description: "buffer length of raw audio data (uint8)",
+      read_only: true,
+      validation: { lower_bounds<>: [1] },
+    }
   n_threads:
     {
       type: int,

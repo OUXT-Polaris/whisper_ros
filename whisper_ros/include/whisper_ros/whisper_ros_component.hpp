@@ -17,9 +17,12 @@
 
 #include <whisper.h>
 
+#include <audio_common_msgs/msg/audio_data.hpp>
+#include <audio_common_msgs/msg/audio_info.hpp>
 #include <optional>
 #include <rclcpp/rclcpp.hpp>
 #include <whisper_parameters.hpp>
+#include <whisper_ros/audio_buffer.hpp>
 #include <whisper_ros/visibility_control.hpp>
 
 namespace whisper_ros
@@ -34,7 +37,10 @@ private:
   std::optional<std::string> findModel() const;
   bool checkLanguage() const;
   std::vector<whisper_token> getPromptTokens(whisper_context * ctx) const;
+  void audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr msg);
+  void audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg);
   const whisper_ros_node::Params parameters_;
+  AudioBuffer buffer_;
 };
 }  // namespace whisper_ros
 
