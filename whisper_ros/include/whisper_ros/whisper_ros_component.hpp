@@ -34,14 +34,23 @@ public:
   explicit WhisperRosComponent(const rclcpp::NodeOptions &);
 
 private:
-  std::optional<std::string> findModel() const;
-  bool checkLanguage() const;
-  std::vector<whisper_token> getPromptTokens(whisper_context *) const;
-  void audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr);
-  void audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr);
-  whisper_full_params getFullParameters(const whisper_ros_node::Params) const;
+  auto findModel() const -> std::optional<std::string>;
+  auto checkLanguage() const -> bool;
+  auto getPromptTokens(whisper_context *) const -> std::vector<whisper_token>;
+  auto audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr) -> void;
+  auto audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr) -> void;
+  auto runInference(const whisper_ros_node::Params &, const std::vector<whisper_token> &) const
+    -> void;
+  auto getFullParameters(const whisper_ros_node::Params, const std::vector<whisper_token> &) const
+    -> whisper_full_params;
   const whisper_ros_node::Params parameters_;
   AudioBuffer buffer_;
+};
+
+struct whisper_print_user_data
+{
+  const whisper_ros_node::Params * params;
+  const std::vector<std::vector<float>> * pcmf32s;
 };
 }  // namespace whisper_ros
 

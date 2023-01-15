@@ -15,15 +15,13 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <filesystem>
 #include <whisper_ros/whisper_ros_component.hpp>
-#define DR_WAV_IMPLEMENTATION
-#include <dr_wav.h>
 
 namespace whisper_ros
 {
 WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
 : Node("whisper_ros_node", options),
   parameters_(whisper_ros_node::ParamListener(get_node_parameters_interface()).get_params()),
-  buffer_(parameters_.audio_buffer_length, get_clock())
+  buffer_(parameters_.audio_buffer_length, get_clock(), parameters_.diarize)
 {
   if (!checkLanguage()) {
     RCLCPP_ERROR_STREAM(
@@ -43,7 +41,7 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
   const auto prompt_tokens = getPromptTokens(ctx);
 }
 
-bool WhisperRosComponent::checkLanguage() const
+auto WhisperRosComponent::checkLanguage() const -> bool
 {
   if (parameters_.language == "auto" && whisper_lang_id(parameters_.language.c_str()) == -1) {
     return false;
@@ -51,7 +49,7 @@ bool WhisperRosComponent::checkLanguage() const
   return true;
 }
 
-std::optional<std::string> WhisperRosComponent::findModel() const
+auto WhisperRosComponent::findModel() const -> std::optional<std::string>
 {
   std::string model_path = ament_index_cpp::get_package_share_directory("whisper_cpp_vendor") +
                            "/share/models/ggml-" + parameters_.model_type + ".bin";
@@ -61,7 +59,7 @@ std::optional<std::string> WhisperRosComponent::findModel() const
   return std::nullopt;
 }
 
-std::vector<whisper_token> WhisperRosComponent::getPromptTokens(whisper_context * ctx) const
+auto WhisperRosComponent::getPromptTokens(whisper_context * ctx) const -> std::vector<whisper_token>
 {
   std::vector<whisper_token> prompt_tokens;
   if (!parameters_.prompt.empty()) {
@@ -77,58 +75,14 @@ std::vector<whisper_token> WhisperRosComponent::getPromptTokens(whisper_context 
   return prompt_tokens;
 }
 
-void WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr msg)
+auto WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr msg)
+  -> void
 {
   const auto wav_data = buffer_.append(msg);
-  drwav wav;
-  if (drwav_init_memory(&wav, wav_data.data(), wav_data.size(), nullptr) == false) {
-    RCLCPP_ERROR_STREAM(get_logger(), "Something wrong happens while reading wav data.");
-    return;
-  }
-  if (wav.channels != 1 && wav.channels != 2) {
-    RCLCPP_ERROR_STREAM(get_logger(), "Wav data must be mono or stereo.");
-    return;
-  }
-  if (parameters_.diarize && wav.channels != 2) {
-    RCLCPP_ERROR_STREAM(
-      get_logger(), "If you want to use stereo diarize, wav data must be mono or stereo.");
-    return;
-  }
-  const uint64_t n = wav_data.empty() ? wav.totalPCMFrameCount
-                                      : wav_data.size() / (wav.channels * wav.bitsPerSample / 8);
-  std::vector<int16_t> pcm16;
-  pcm16.resize(n * wav.channels);
-  drwav_read_pcm_frames_s16(&wav, n, pcm16.data());
-  drwav_uninit(&wav);
-
-  // convert to mono, float
-  std::vector<float> pcmf32;                // mono-channel F32 PCM
-  std::vector<std::vector<float>> pcmf32s;  // stereo-channel F32 PCM
-  pcmf32.resize(n);
-  if (wav.channels == 1) {
-    for (uint64_t i = 0; i < n; i++) {
-      pcmf32[i] = float(pcm16[i]) / 32768.0f;
-    }
-  } else {
-    for (uint64_t i = 0; i < n; i++) {
-      pcmf32[i] = float(pcm16[2 * i] + pcm16[2 * i + 1]) / 65536.0f;
-    }
-  }
-
-  if (parameters_.diarize) {
-    // convert to stereo, float
-    pcmf32s.resize(2);
-
-    pcmf32s[0].resize(n);
-    pcmf32s[1].resize(n);
-    for (uint64_t i = 0; i < n; i++) {
-      pcmf32s[0][i] = float(pcm16[2 * i]) / 32768.0f;
-      pcmf32s[1][i] = float(pcm16[2 * i + 1]) / 32768.0f;
-    }
-  }
 }
 
-void WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg)
+auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg)
+  -> void
 {
   if (msg->sample_rate != WHISPER_SAMPLE_RATE) {
     RCLCPP_ERROR_STREAM(get_logger(), "Sampling rate should be " << WHISPER_SAMPLE_RATE << " Hz");
@@ -139,13 +93,28 @@ void WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioI
 }
 
 /**
+ * @brief 
+ * 
+ * @param params 
+ * @param tokens
+ * @sa https://github.com/ggerganov/whisper.cpp/blob/00ea21668b7db98e0530324c0bc1bff53df6995c/examples/main/main.cpp#L665-L686 
+ */
+auto WhisperRosComponent::runInference(
+  const whisper_ros_node::Params & params, const std::vector<whisper_token> & tokens) const -> void
+{
+  const auto full_params = getFullParameters(params, tokens);
+  // whisper_print_user_data user_data = {&params, &pcmf32s};
+}
+
+/**
  * @brief get full paramter for whisper algorithm
  * @param parameters paramters for whisper_ros node
  * @return whisper_full_params 
  * @sa https://github.com/ggerganov/whisper.cpp/blob/8738427dd60bda894df1ff3c12317cca2e960016/examples/main/main.cpp#L631-L668
  */
-whisper_full_params WhisperRosComponent::getFullParameters(
-  const whisper_ros_node::Params params) const
+auto WhisperRosComponent::getFullParameters(
+  const whisper_ros_node::Params params, const std::vector<whisper_token> & prompt_tokens) const
+  -> whisper_full_params
 {
   whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
   wparams.strategy = params.beam_size > 1 ? WHISPER_SAMPLING_BEAM_SEARCH : WHISPER_SAMPLING_GREEDY;
@@ -164,6 +133,13 @@ whisper_full_params WhisperRosComponent::getFullParameters(
   wparams.entropy_thold = params.entropy_thold;
   wparams.logprob_thold = params.logprob_thold;
   wparams.max_len = params.max_len == 0 ? 60 : params.max_len;
+  wparams.speed_up = params.speed_up;
+  wparams.greedy.best_of = params.best_of;
+  wparams.beam_search.beam_size = params.beam_size;
+  wparams.temperature_inc = -1;
+  wparams.prompt_tokens = prompt_tokens.empty() ? nullptr : prompt_tokens.data();
+  wparams.prompt_n_tokens = prompt_tokens.empty() ? 0 : prompt_tokens.size();
+  // whisper_print_user_data user_data = {&params, &pcmf32s};
   return wparams;
 }
 }  // namespace whisper_ros

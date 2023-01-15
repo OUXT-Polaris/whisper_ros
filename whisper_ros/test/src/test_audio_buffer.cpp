@@ -32,7 +32,7 @@
 
 TEST(TestSuite, append)
 {
-  whisper_ros::AudioBuffer buffer(100, std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME));
+  whisper_ros::AudioBuffer buffer(100, std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME), false);
   auto data = std::make_shared<audio_common_msgs::msg::AudioData>();
   data->data = std::vector<uint8_t>(100, 1);
   {
@@ -70,6 +70,15 @@ TEST(TestSuite, append)
       EXPECT_EQ(static_cast<int>(value), 4);
     }
   }
+}
+
+TEST(TestSuite, modulate)
+{
+  whisper_ros::AudioBuffer buffer(100, std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME), false);
+  auto data = std::make_shared<audio_common_msgs::msg::AudioData>();
+  data->data = std::vector<uint8_t>(100, 1);
+  buffer.append(data);
+  EXPECT_TRUE(buffer.modulate());
 }
 
 int main(int argc, char ** argv)

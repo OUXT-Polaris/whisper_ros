@@ -17,18 +17,29 @@
 
 #include <audio_common_msgs/msg/audio_data.hpp>
 #include <cstddef>
+#include <optional>
 #include <rclcpp/rclcpp.hpp>
 #include <vector>
 
 namespace whisper_ros
 {
+struct ModulatedData
+{
+  const std::vector<int16_t> pcm16;
+  const std::vector<float> pcmf32;                // mono-channel F32 PCM
+  const std::vector<std::vector<float>> pcmf32s;  // stereo-channel F32 PCM
+};
+
 class AudioBuffer
 {
 public:
-  explicit AudioBuffer(size_t buffer_length, const rclcpp::Clock::SharedPtr clock);
+  explicit AudioBuffer(
+    const size_t buffer_length, const rclcpp::Clock::SharedPtr clock, bool diarize);
   const size_t buffer_length;
+  const bool diarize;
   auto append(const audio_common_msgs::msg::AudioData::SharedPtr msg) -> std::vector<uint8_t>;
   auto getTimeStamp() const -> rclcpp::Time;
+  auto modulate() const -> std::optional<ModulatedData>;
 
 private:
   const rclcpp::Clock::SharedPtr clock_;
