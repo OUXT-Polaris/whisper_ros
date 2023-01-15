@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <dr_wav.h>
-
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <filesystem>
 #include <whisper_ros/whisper_ros_component.hpp>
+#define DR_WAV_IMPLEMENTATION
+#include <dr_wav.h>
 
 namespace whisper_ros
 {

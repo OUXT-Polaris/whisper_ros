@@ -56,6 +56,8 @@ macro(build_whisper_cpp)
   download_model(large-v1)
   download_model(large)
 
+  ament_export_libraries(whisper)
+
   unset(WHISPER_SRC_DIR)
 endmacro()
 
