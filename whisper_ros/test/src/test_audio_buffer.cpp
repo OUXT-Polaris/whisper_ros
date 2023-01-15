@@ -72,14 +72,70 @@ TEST(TestSuite, append)
   }
 }
 
-TEST(TestSuite, modulate)
+TEST(TestSuite, append2)
 {
   whisper_ros::AudioBuffer buffer(100, std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME), false);
   auto data = std::make_shared<audio_common_msgs::msg::AudioData>();
-  data->data = std::vector<uint8_t>(100, 1);
-  buffer.append(data);
-  EXPECT_TRUE(buffer.modulate());
+  data->data = std::vector<uint8_t>(30, 1);
+  {
+    const auto values = buffer.append(data);
+    EXPECT_EQ(static_cast<int>(values.size()), 30);
+    for (const auto & value : values) {
+      EXPECT_EQ(static_cast<int>(value), 1);
+    }
+  }
+  data->data = std::vector<uint8_t>(30, 2);
+  {
+    const auto values = buffer.append(data);
+    EXPECT_EQ(static_cast<int>(values.size()), 60);
+    for (size_t i = 0; i < 60; i++) {
+      if (i <= 29) {
+        EXPECT_EQ(static_cast<int>(values[i]), 1);
+      } else {
+        EXPECT_EQ(static_cast<int>(values[i]), 2);
+      }
+    }
+  }
+  data->data = std::vector<uint8_t>(30, 3);
+  {
+    const auto values = buffer.append(data);
+    EXPECT_EQ(static_cast<int>(values.size()), 90);
+    for (size_t i = 0; i < 60; i++) {
+      if (i <= 29) {
+        EXPECT_EQ(static_cast<int>(values[i]), 1);
+      } else if (i <= 59) {
+        EXPECT_EQ(static_cast<int>(values[i]), 2);
+      } else {
+        EXPECT_EQ(static_cast<int>(values[i]), 3);
+      }
+    }
+  }
+  data->data = std::vector<uint8_t>(30, 4);
+  {
+    const auto values = buffer.append(data);
+    EXPECT_EQ(static_cast<int>(values.size()), 100);
+    for (size_t i = 0; i < 60; i++) {
+      if (i <= 9) {
+        EXPECT_EQ(static_cast<int>(values[i]), 1);
+      } else if (i <= 39) {
+        EXPECT_EQ(static_cast<int>(values[i]), 2);
+      } else if (i <= 69) {
+        EXPECT_EQ(static_cast<int>(values[i]), 3);
+      } else {
+        EXPECT_EQ(static_cast<int>(values[i]), 4);
+      }
+    }
+  }
 }
+
+// TEST(TestSuite, modulate)
+// {
+//   whisper_ros::AudioBuffer buffer(100, std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME), false);
+//   auto data = std::make_shared<audio_common_msgs::msg::AudioData>();
+//   data->data = std::vector<uint8_t>(100, 1);
+//   buffer.append(data);
+//   EXPECT_TRUE(buffer.modulate());
+// }
 
 int main(int argc, char ** argv)
 {

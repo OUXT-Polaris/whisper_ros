@@ -78,7 +78,7 @@ auto WhisperRosComponent::getPromptTokens(whisper_context * ctx) const -> std::v
 auto WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr msg)
   -> void
 {
-  const auto wav_data = buffer_.append(msg);
+  buffer_.append(msg);
 }
 
 auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg)
@@ -103,6 +103,7 @@ auto WhisperRosComponent::runInference(
   const whisper_ros_node::Params & params, const std::vector<whisper_token> & tokens) const -> void
 {
   const auto full_params = getFullParameters(params, tokens);
+  buffer_.modulate();
   // whisper_print_user_data user_data = {&params, &pcmf32s};
 }
 
