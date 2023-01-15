@@ -1,5 +1,22 @@
 # parameters comes from https://github.com/ggerganov/whisper.cpp/blob/4ef3398e8fe0c426de038b8c3816c6791a34a5ae/examples/main/main.cpp#L135-L165
+# and https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L252-L278
 whisper_ros_node:
+  best_of:
+    {
+      type: int,
+      default_value: 5,
+      description: "number of candidates when sampling with non-zero temperature",
+      read_only: true,
+      validation: { lower_bounds<>: [1] },
+    }
+  beam_size :
+    {
+      type: int,
+      default_value: 5,
+      description: "number of beams in beam search, only applicable when temperature is zero",
+      read_only: true,
+      validation: { lower_bounds<>: [1] },
+    }
   audio_buffer_length:
     {
       type: int,
@@ -45,7 +62,7 @@ whisper_ros_node:
       type: int,
       default_value: -1,
       read_only: true,
-      description: "duration of audio to process in milliseconds",
+      description: "maximum number of text context tokens to store",
     }
   max_len:
     {
@@ -61,6 +78,20 @@ whisper_ros_node:
       default_value: 0.01,
       read_only: true,
       description: "word timestamp probability threshold",
+    }
+  entropy_thold:
+    {
+      type: double,
+      default_value: 2.4,
+      read_only: true,
+      description: "entropy threshold for decoder fail",
+    }
+  logprob_thold:
+    {
+      type: double,
+      default_value: -1.0,
+      read_only: true,
+      description: "entropy threshold for decoder fail",
     }
   speed_up:
     {

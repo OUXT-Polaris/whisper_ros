@@ -31,14 +31,15 @@ class WhisperRosComponent : public rclcpp::Node
 {
 public:
   COMPOSITION_PUBLIC
-  explicit WhisperRosComponent(const rclcpp::NodeOptions & options);
+  explicit WhisperRosComponent(const rclcpp::NodeOptions &);
 
 private:
   std::optional<std::string> findModel() const;
   bool checkLanguage() const;
-  std::vector<whisper_token> getPromptTokens(whisper_context * ctx) const;
-  void audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr msg);
-  void audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg);
+  std::vector<whisper_token> getPromptTokens(whisper_context *) const;
+  void audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr);
+  void audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr);
+  whisper_full_params getFullParameters(const whisper_ros_node::Params) const;
   const whisper_ros_node::Params parameters_;
   AudioBuffer buffer_;
 };

@@ -32,7 +32,7 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
   }
   struct whisper_context * ctx;
   if (const auto model_path = findModel()) {
-    ctx = whisper_init(model_path.value().c_str());
+    ctx = whisper_init_from_file(model_path.value().c_str());
   } else {
     return;
   }
@@ -136,6 +136,35 @@ void WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioI
   if (msg->bitrate != 16) {
     RCLCPP_ERROR_STREAM(get_logger(), "Bitrate should be 16");
   }
+}
+
+/**
+ * @brief get full paramter for whisper algorithm
+ * @param parameters paramters for whisper_ros node
+ * @return whisper_full_params 
+ * @sa https://github.com/ggerganov/whisper.cpp/blob/8738427dd60bda894df1ff3c12317cca2e960016/examples/main/main.cpp#L631-L668
+ */
+whisper_full_params WhisperRosComponent::getFullParameters(
+  const whisper_ros_node::Params params) const
+{
+  whisper_full_params wparams = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+  wparams.strategy = params.beam_size > 1 ? WHISPER_SAMPLING_BEAM_SEARCH : WHISPER_SAMPLING_GREEDY;
+  wparams.print_realtime = false;
+  wparams.print_progress = false;
+  wparams.print_timestamps = false;
+  wparams.print_special = false;
+  wparams.translate = params.translate;
+  wparams.language = params.language.c_str();
+  wparams.n_threads = params.n_threads;
+  wparams.n_max_text_ctx = params.max_context >= 0 ? params.max_context : wparams.n_max_text_ctx;
+  wparams.offset_ms = params.offset_t_ms;
+  wparams.duration_ms = 0;
+  wparams.token_timestamps = true;
+  wparams.thold_pt = params.word_thold;
+  wparams.entropy_thold = params.entropy_thold;
+  wparams.logprob_thold = params.logprob_thold;
+  wparams.max_len = params.max_len == 0 ? 60 : params.max_len;
+  return wparams;
 }
 }  // namespace whisper_ros
 

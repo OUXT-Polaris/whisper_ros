@@ -28,7 +28,7 @@ macro(build_whisper_cpp)
   include(ExternalProject)
   externalproject_add(whisper_cpp-ext
     GIT_REPOSITORY https://github.com/ggerganov/whisper.cpp.git
-    GIT_TAG 1.0.4
+    GIT_TAG 1.1.0
     TIMEOUT 6000
     ${cmake_commands}
     CMAKE_ARGS
