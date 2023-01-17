@@ -24,9 +24,14 @@
 #include <whisper_parameters.hpp>
 #include <whisper_ros/audio_buffer.hpp>
 #include <whisper_ros/visibility_control.hpp>
+#include <whisper_ros_msgs/msg/segment.hpp>
 
 namespace whisper_ros
 {
+struct Modulated
+{
+};
+
 class WhisperRosComponent : public rclcpp::Node
 {
 public:
@@ -36,15 +41,18 @@ public:
 private:
   auto findModel() const -> std::optional<std::string>;
   auto checkLanguage() const -> bool;
-  auto getPromptTokens(whisper_context *) const -> std::vector<whisper_token>;
+  auto getPromptTokens() const -> std::vector<whisper_token>;
   auto audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr) -> void;
   auto audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr) -> void;
   auto runInference(const whisper_ros_node::Params &, const std::vector<whisper_token> &) const
     -> void;
   auto getFullParameters(const whisper_ros_node::Params, const std::vector<whisper_token> &) const
     -> whisper_full_params;
+  auto whisper_print_segment_callback(int n_new, void * user_data) -> void;
   const whisper_ros_node::Params parameters_;
   AudioBuffer buffer_;
+  std::optional<audio_common_msgs::msg::AudioInfo::SharedPtr> audio_info_;
+  struct whisper_context * ctx_;
 };
 
 struct whisper_print_user_data

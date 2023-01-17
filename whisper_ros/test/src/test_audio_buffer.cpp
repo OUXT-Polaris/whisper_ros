@@ -130,9 +130,10 @@ TEST(TestSuite, append2)
 
 // TEST(TestSuite, modulate)
 // {
-//   whisper_ros::AudioBuffer buffer(100, std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME), false);
+//   const size_t length = 1024;
+//   whisper_ros::AudioBuffer buffer(length, std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME), false);
 //   auto data = std::make_shared<audio_common_msgs::msg::AudioData>();
-//   data->data = std::vector<uint8_t>(100, 1);
+//   data->data = std::vector<uint8_t>(length, 1);
 //   buffer.append(data);
 //   EXPECT_TRUE(buffer.modulate());
 // }

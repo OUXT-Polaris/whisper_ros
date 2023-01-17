@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="ms.kataoka@gmail.com">masaya-desktop</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -17,7 +17,8 @@
   <depend>rclcpp_components</depend>
   <depend>rclcpp</depend>
   <depend>whisper_cpp_vendor</depend>
-  
+  <depend>whisper_ros_msgs</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ouxt_lint_common</test_depend>
 

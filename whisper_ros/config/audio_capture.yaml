@@ -2,7 +2,7 @@ audio_capture_node:
   ros__parameters:
     dst: "appsink"
     device: "/dev/ttyusb"
-    format: "mp3"
+    format: "wave"
     bitrate: 128
     channels: 1
     depth: 16

@@ -28,17 +28,17 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
       get_logger(), "Invalida language : " << parameters_.language << " specofied.");
     return;
   }
-  struct whisper_context * ctx;
   if (const auto model_path = findModel()) {
-    ctx = whisper_init_from_file(model_path.value().c_str());
+    ctx_ = whisper_init_from_file(model_path.value().c_str());
   } else {
     return;
   }
-  if (ctx == nullptr) {
+  if (ctx_ == nullptr) {
     RCLCPP_ERROR_STREAM(get_logger(), "error: failed to initialize whisper context");
     return;
   }
-  const auto prompt_tokens = getPromptTokens(ctx);
+  // rclcpp::QoS durable_qos{1};
+  // durable_qos.transient_local();
 }
 
 auto WhisperRosComponent::checkLanguage() const -> bool
@@ -59,13 +59,13 @@ auto WhisperRosComponent::findModel() const -> std::optional<std::string>
   return std::nullopt;
 }
 
-auto WhisperRosComponent::getPromptTokens(whisper_context * ctx) const -> std::vector<whisper_token>
+auto WhisperRosComponent::getPromptTokens() const -> std::vector<whisper_token>
 {
   std::vector<whisper_token> prompt_tokens;
   if (!parameters_.prompt.empty()) {
     prompt_tokens.resize(1024);
     prompt_tokens.resize(whisper_tokenize(
-      ctx, parameters_.prompt.c_str(), prompt_tokens.data(), prompt_tokens.size()));
+      ctx_, parameters_.prompt.c_str(), prompt_tokens.data(), prompt_tokens.size()));
     RCLCPP_INFO(get_logger(), "initial prompt: '%s'\n", parameters_.prompt.c_str());
     RCLCPP_INFO(get_logger(), "initial tokens: [ ");
     for (int i = 0; i < (int)prompt_tokens.size(); ++i) {
@@ -79,6 +79,8 @@ auto WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioD
   -> void
 {
   buffer_.append(msg);
+  runInference(parameters_, getPromptTokens());
+  // runInference(parameters_, );
 }
 
 auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg)
@@ -87,8 +89,19 @@ auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioI
   if (msg->sample_rate != WHISPER_SAMPLE_RATE) {
     RCLCPP_ERROR_STREAM(get_logger(), "Sampling rate should be " << WHISPER_SAMPLE_RATE << " Hz");
   }
-  if (msg->bitrate != 16) {
-    RCLCPP_ERROR_STREAM(get_logger(), "Bitrate should be 16");
+  if (msg->sample_format != "S16LE") {
+    RCLCPP_ERROR_STREAM(
+      get_logger(), "Sample format should be S16LE, current value is " << msg->sample_format);
+  }
+  if (msg->coding_format == "wave") {
+    RCLCPP_ERROR_STREAM(
+      get_logger(), "Coding format should be wave, current format is " << msg->coding_format);
+  }
+  if (msg->channels == 1 or msg->channels == 2) {
+    audio_info_ = msg;
+  } else {
+    RCLCPP_ERROR_STREAM(
+      get_logger(), "Channels should be 1 or 2, current value is " << msg->channels);
   }
 }
 
@@ -103,7 +116,7 @@ auto WhisperRosComponent::runInference(
   const whisper_ros_node::Params & params, const std::vector<whisper_token> & tokens) const -> void
 {
   const auto full_params = getFullParameters(params, tokens);
-  buffer_.modulate();
+  // buffer_.modulate();
   // whisper_print_user_data user_data = {&params, &pcmf32s};
 }
 
@@ -142,6 +155,13 @@ auto WhisperRosComponent::getFullParameters(
   wparams.prompt_n_tokens = prompt_tokens.empty() ? 0 : prompt_tokens.size();
   // whisper_print_user_data user_data = {&params, &pcmf32s};
   return wparams;
+}
+
+auto WhisperRosComponent::whisper_print_segment_callback(int n_new, void * user_data) -> void
+{
+  const auto & params = *((whisper_print_user_data *)user_data)->params;
+  const auto & pcmf32s = *((whisper_print_user_data *)user_data)->pcmf32s;
+  const int n_segments = whisper_full_n_segments(ctx_);
 }
 }  // namespace whisper_ros
 
