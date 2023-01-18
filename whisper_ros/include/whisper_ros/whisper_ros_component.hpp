@@ -37,6 +37,7 @@ class WhisperRosComponent : public rclcpp::Node
 public:
   COMPOSITION_PUBLIC
   explicit WhisperRosComponent(const rclcpp::NodeOptions &);
+  ~WhisperRosComponent();
 
 private:
   auto findModel() const -> std::optional<std::string>;

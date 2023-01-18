@@ -42,6 +42,8 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
   print_segment_callback_pointer_ = &WhisperRosComponent::whisper_print_segment_callback;
 }
 
+WhisperRosComponent::~WhisperRosComponent() { whisper_free(ctx_); }
+
 auto WhisperRosComponent::checkLanguage() const -> bool
 {
   if (parameters_.language == "auto" && whisper_lang_id(parameters_.language.c_str()) == -1) {
@@ -128,6 +130,21 @@ auto WhisperRosComponent::runInference(
   full_params.new_segment_callback =
     (whisper_new_segment_callback)(this->print_segment_callback_pointer_);
   full_params.new_segment_callback_user_data = &user_data;
+  {
+    static bool is_aborted = false;  // NOTE: this should be atomic to avoid data race
+
+    full_params.encoder_begin_callback = [](struct whisper_context * /*ctx*/, void * user_data) {
+      bool is_aborted = *(bool *)user_data;
+      return !is_aborted;
+    };
+    full_params.encoder_begin_callback_user_data = &is_aborted;
+  }
+  if (
+    whisper_full_parallel(
+      ctx_, full_params, data.value().pcmf32.data(), data.value().pcmf32.size(),
+      params.n_processors) != 0) {
+    RCLCPP_ERROR_STREAM(get_logger(), "Failed to process audio.");
+  }
 }
 
 /**
