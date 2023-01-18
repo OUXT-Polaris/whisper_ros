@@ -25,6 +25,7 @@
 #include <whisper_ros/audio_buffer.hpp>
 #include <whisper_ros/visibility_control.hpp>
 #include <whisper_ros_msgs/msg/segment.hpp>
+#include <whisper_ros_msgs/msg/segment_array_stamped.hpp>
 
 namespace whisper_ros
 {
@@ -49,6 +50,7 @@ private:
   auto getFullParameters(const whisper_ros_node::Params, const std::vector<whisper_token> &) const
     -> whisper_full_params;
   auto whisper_print_segment_callback(whisper_context * ctx, int n_new, void * user_data) -> void;
+  auto timestampToSample(int64_t t, int n_samples) const -> int;
   const whisper_ros_node::Params parameters_;
   AudioBuffer buffer_;
   std::optional<audio_common_msgs::msg::AudioInfo::SharedPtr> audio_info_;

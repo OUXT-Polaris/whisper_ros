@@ -12,6 +12,7 @@ find_package(builtin_interfaces REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Segment.msg"
+  "msg/SegmentArrayStamped.msg"
   DEPENDENCIES builtin_interfaces std_msgs
 )
 

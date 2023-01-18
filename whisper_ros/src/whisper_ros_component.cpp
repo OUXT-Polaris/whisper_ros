@@ -184,12 +184,57 @@ auto WhisperRosComponent::getFullParameters(
   return wparams;
 }
 
+auto WhisperRosComponent::timestampToSample(int64_t t, int n_samples) const -> int
+{
+  return std::max(0, std::min((int)n_samples - 1, (int)((t * WHISPER_SAMPLE_RATE) / 100)));
+}
+
 auto WhisperRosComponent::whisper_print_segment_callback(
   whisper_context * ctx, int n_new, void * user_data) -> void
 {
+  whisper_ros_msgs::msg::SegmentArrayStamped segment_array_stamped;
+  segment_array_stamped.stamp = buffer_.getTimeStamp();
   const auto & params = *((whisper_print_user_data *)user_data)->params;
   const auto & pcmf32s = *((whisper_print_user_data *)user_data)->pcmf32s;
   const int n_segments = whisper_full_n_segments(ctx);
+  int64_t t0;
+  int64_t t1;
+  const int s0 = n_segments - n_new;
+  for (int i = s0; i < n_segments; i++) {
+    if (params.diarize) {
+      t0 = whisper_full_get_segment_t0(ctx, i);
+      t1 = whisper_full_get_segment_t1(ctx, i);
+    }
+    whisper_ros_msgs::msg::Segment segment;
+    segment.start_timestamp =
+      rclcpp::Time(segment_array_stamped.stamp) +
+      rclcpp::Duration(std::chrono::nanoseconds(std::chrono::milliseconds{t0 * 10}));
+    segment.end_timestamp =
+      rclcpp::Time(segment_array_stamped.stamp) +
+      rclcpp::Duration(std::chrono::nanoseconds(std::chrono::milliseconds{t1 * 10}));
+    if (params.diarize && pcmf32s.size() == 2) {
+      const int64_t n_samples = pcmf32s[0].size();
+      const int64_t is0 = timestampToSample(t0, n_samples);
+      const int64_t is1 = timestampToSample(t1, n_samples);
+      double energy0 = 0.0f;
+      double energy1 = 0.0f;
+      for (int64_t j = is0; j < is1; j++) {
+        energy0 += fabs(pcmf32s[0][j]);
+        energy1 += fabs(pcmf32s[1][j]);
+      }
+      if (energy0 > 1.1 * energy1) {
+        segment.speaker_id = 0;
+      } else if (energy1 > 1.1 * energy0) {
+        segment.speaker_id = 1;
+      } else {
+        segment.speaker_id = whisper_ros_msgs::msg::Segment::SPEAKER_UNKNOWN;
+      }
+    } else {
+      segment.speaker_id = whisper_ros_msgs::msg::Segment::SPEAKER_UNKNOWN;
+    }
+    segment.text = std::string(whisper_full_get_segment_text(ctx, i));
+    segment_array_stamped.segments.emplace_back(segment);
+  }
 }
 }  // namespace whisper_ros
 
