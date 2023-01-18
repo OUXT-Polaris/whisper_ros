@@ -39,6 +39,7 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
   }
   // rclcpp::QoS durable_qos{1};
   // durable_qos.transient_local();
+  print_segment_callback_pointer_ = &WhisperRosComponent::whisper_print_segment_callback;
 }
 
 auto WhisperRosComponent::checkLanguage() const -> bool
@@ -113,11 +114,20 @@ auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioI
  * @sa https://github.com/ggerganov/whisper.cpp/blob/00ea21668b7db98e0530324c0bc1bff53df6995c/examples/main/main.cpp#L665-L686 
  */
 auto WhisperRosComponent::runInference(
-  const whisper_ros_node::Params & params, const std::vector<whisper_token> & tokens) const -> void
+  const whisper_ros_node::Params & params, const std::vector<whisper_token> & tokens) -> void
 {
-  const auto full_params = getFullParameters(params, tokens);
-  // buffer_.modulate();
-  // whisper_print_user_data user_data = {&params, &pcmf32s};
+  if (!audio_info_) {
+    RCLCPP_WARN_STREAM(get_logger(), "Audio info topic does not subscribed yet.");
+  }
+  const auto data = buffer_.modulate(audio_info_.value()->channels);
+  if (!data) {
+    RCLCPP_WARN_STREAM(get_logger(), "Failed to modulate audio data.");
+  }
+  whisper_print_user_data user_data = {&params, &data.value().pcmf32s};
+  auto full_params = getFullParameters(params, tokens);
+  full_params.new_segment_callback =
+    (whisper_new_segment_callback)(this->print_segment_callback_pointer_);
+  full_params.new_segment_callback_user_data = &user_data;
 }
 
 /**
@@ -157,11 +167,12 @@ auto WhisperRosComponent::getFullParameters(
   return wparams;
 }
 
-auto WhisperRosComponent::whisper_print_segment_callback(int n_new, void * user_data) -> void
+auto WhisperRosComponent::whisper_print_segment_callback(
+  whisper_context * ctx, int n_new, void * user_data) -> void
 {
   const auto & params = *((whisper_print_user_data *)user_data)->params;
   const auto & pcmf32s = *((whisper_print_user_data *)user_data)->pcmf32s;
-  const int n_segments = whisper_full_n_segments(ctx_);
+  const int n_segments = whisper_full_n_segments(ctx);
 }
 }  // namespace whisper_ros
 

@@ -23,8 +23,21 @@
 
 namespace whisper_ros
 {
-auto toFloat32Single(const std::vector<int16_t> & values) -> std::vector<float>;
+auto toFloat32Mono(const std::vector<int16_t> & values, size_t num_channels)
+  -> std::optional<std::vector<float>>;
+auto toFloat32Stero(const std::vector<int16_t> & values, size_t num_channels)
+  -> std::optional<std::vector<std::vector<float>>>;
 auto toInt16(const std::vector<uint8_t> & values) -> std::optional<std::vector<int16_t>>;
+
+struct ModulatedData
+{
+  const std::vector<int16_t> pcm16;               // int16 PCM
+  const std::vector<float> pcmf32;                // mono-channel F32 PCM
+  const std::vector<std::vector<float>> pcmf32s;  // stereo-channel F32 PCM
+  explicit ModulatedData(
+    const std::vector<int16_t> & pcm16, const std::vector<float> & pcmf32,
+    const std::vector<std::vector<float>> & pcmf32s);
+};
 
 class AudioBuffer
 {
@@ -35,7 +48,7 @@ public:
   const bool diarize;
   auto append(const audio_common_msgs::msg::AudioData::SharedPtr msg) -> std::vector<uint8_t>;
   auto getTimeStamp() const -> rclcpp::Time;
-  auto modulate() const -> std::optional<std::vector<int16_t>>;
+  auto modulate(size_t num_channels) const -> std::optional<ModulatedData>;
 
 private:
   const rclcpp::Clock::SharedPtr clock_;

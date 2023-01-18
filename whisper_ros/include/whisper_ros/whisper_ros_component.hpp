@@ -44,15 +44,17 @@ private:
   auto getPromptTokens() const -> std::vector<whisper_token>;
   auto audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr) -> void;
   auto audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr) -> void;
-  auto runInference(const whisper_ros_node::Params &, const std::vector<whisper_token> &) const
-    -> void;
+  auto runInference(const whisper_ros_node::Params &, const std::vector<whisper_token> &) -> void;
   auto getFullParameters(const whisper_ros_node::Params, const std::vector<whisper_token> &) const
     -> whisper_full_params;
-  auto whisper_print_segment_callback(int n_new, void * user_data) -> void;
+  auto whisper_print_segment_callback(whisper_context * ctx, int n_new, void * user_data) -> void;
   const whisper_ros_node::Params parameters_;
   AudioBuffer buffer_;
   std::optional<audio_common_msgs::msg::AudioInfo::SharedPtr> audio_info_;
   struct whisper_context * ctx_;
+  typedef void (WhisperRosComponent::*PRINT_SEGMENT_CALLBACK_POINTER)(
+    whisper_context *, int n_new, void * user_data);
+  PRINT_SEGMENT_CALLBACK_POINTER print_segment_callback_pointer_;
 };
 
 struct whisper_print_user_data

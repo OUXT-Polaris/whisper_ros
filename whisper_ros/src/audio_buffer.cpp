@@ -20,6 +20,14 @@
 
 namespace whisper_ros
 {
+
+ModulatedData::ModulatedData(
+  const std::vector<int16_t> & pcm16, const std::vector<float> & pcmf32,
+  const std::vector<std::vector<float>> & pcmf32s)
+: pcm16(pcm16), pcmf32(pcmf32), pcmf32s(pcmf32s)
+{
+}
+
 AudioBuffer::AudioBuffer(
   const size_t buffer_length, const rclcpp::Clock::SharedPtr clock, const bool diarize)
 : buffer_length(buffer_length), diarize(diarize), clock_(clock)
@@ -49,17 +57,69 @@ auto AudioBuffer::append(const audio_common_msgs::msg::AudioData::SharedPtr msg)
 
 auto AudioBuffer::getTimeStamp() const -> rclcpp::Time { return timestamp_; }
 
-auto AudioBuffer::modulate() const -> std::optional<std::vector<int16_t>>
+auto AudioBuffer::modulate(size_t num_channels) const -> std::optional<ModulatedData>
 {
-  return toInt16(raw_data_);
+  const auto pcm16 = toInt16(raw_data_);
+  if (!pcm16) {
+    return std::nullopt;
+  }
+  const auto pcmf32 = toFloat32Mono(pcm16.value(), num_channels);
+  if (!pcmf32) {
+    return std::nullopt;
+  }
+  if (diarize) {
+    const auto pcmf32s = toFloat32Stero(pcm16.value(), num_channels);
+    if (!pcmf32s) {
+      return std::nullopt;
+    }
+    return ModulatedData(pcm16.value(), pcmf32.value(), pcmf32s.value());
+  } else {
+    return ModulatedData(pcm16.value(), pcmf32.value(), std::vector<std::vector<float>>());
+  }
 }
 
-auto toFloat32Single(const std::vector<int16_t> & values) -> std::vector<float>
+auto toFloat32Mono(const std::vector<int16_t> & values, size_t num_channels)
+  -> std::optional<std::vector<float>>
 {
   std::vector<float> ret;
-  std::transform(values.begin(), values.end(), std::back_inserter(ret), [](const int16_t x) {
-    return static_cast<float>(x) / 32768.0f;
-  });
+  switch (num_channels) {
+    case 1:
+      std::transform(values.begin(), values.end(), std::back_inserter(ret), [](const int16_t x) {
+        return static_cast<float>(x) / 32768.0f;
+      });
+      return ret;
+    case 2:
+      if (values.size() % 2 == 0) {
+        for (size_t i = 0; i < values.size() / 2; i++) {
+          ret[i] = static_cast<float>(values[2 * i] + values[2 * i + 1]) / 65536.0f;
+        }
+        return ret;
+      } else {
+        return std::nullopt;
+      }
+    default:
+      return std::nullopt;
+  }
+}
+
+auto toFloat32Stero(const std::vector<int16_t> & values, size_t num_channels)
+  -> std::optional<std::vector<std::vector<float>>>
+{
+  if (num_channels != 2) {
+    return std::nullopt;
+  }
+  if (values.size() % 2 != 0) {
+    return std::nullopt;
+  }
+  const size_t n = values.size() / 2;
+  std::vector<std::vector<float>> ret;
+  ret.resize(2);
+  ret[0].resize(n);
+  ret[1].resize(n);
+  for (uint64_t i = 0; i < n; i++) {
+    ret[0][i] = float(values[2 * i]) / 32768.0f;
+    ret[1][i] = float(values[2 * i + 1]) / 32768.0f;
+  }
   return ret;
 }
 
@@ -72,59 +132,5 @@ auto toInt16(const std::vector<uint8_t> & values) -> std::optional<std::vector<i
     return std::nullopt;
   }
 }
-
-// auto AudioBuffer::modulate() const -> std::optional<ModulatedData>
-// {
-//   std::cout << raw_data_.size() << std::endl;
-//   drwav wav;
-//   if (drwav_init_memory(&wav, raw_data_.data(), raw_data_.size(), nullptr) == false) {
-//     RCLCPP_ERROR_STREAM(
-//       rclcpp::get_logger("audio_buffer"), "Something wrong happens while reading wav data.");
-//     return std::nullopt;
-//   }
-//   if (wav.channels != 1 && wav.channels != 2) {
-//     RCLCPP_ERROR_STREAM(rclcpp::get_logger("audio_buffer"), "Wav data must be mono or stereo.");
-//     return std::nullopt;
-//   }
-//   if (diarize && wav.channels != 2) {
-//     RCLCPP_ERROR_STREAM(
-//       rclcpp::get_logger("audio_buffer"),
-//       "If you want to use stereo diarize, wav data must be mono or stereo.");
-//     return std::nullopt;
-//   }
-//   const uint64_t n = raw_data_.empty() ? wav.totalPCMFrameCount
-//                                        : raw_data_.size() / (wav.channels * wav.bitsPerSample / 8);
-//   std::vector<int16_t> pcm16;
-//   pcm16.resize(n * wav.channels);
-//   drwav_read_pcm_frames_s16(&wav, n, pcm16.data());
-//   drwav_uninit(&wav);
-
-//   // convert to mono, float
-//   std::vector<float> pcmf32;                // mono-channel F32 PCM
-//   std::vector<std::vector<float>> pcmf32s;  // stereo-channel F32 PCM
-//   pcmf32.resize(n);
-//   if (wav.channels == 1) {
-//     for (uint64_t i = 0; i < n; i++) {
-//       pcmf32[i] = float(pcm16[i]) / 32768.0f;
-//     }
-//   } else {
-//     for (uint64_t i = 0; i < n; i++) {
-//       pcmf32[i] = float(pcm16[2 * i] + pcm16[2 * i + 1]) / 65536.0f;
-//     }
-//   }
-
-//   if (diarize) {
-//     // convert to stereo, float
-//     pcmf32s.resize(2);
-
-//     pcmf32s[0].resize(n);
-//     pcmf32s[1].resize(n);
-//     for (uint64_t i = 0; i < n; i++) {
-//       pcmf32s[0][i] = float(pcm16[2 * i]) / 32768.0f;
-//       pcmf32s[1][i] = float(pcm16[2 * i + 1]) / 32768.0f;
-//     }
-//   }
-//   return ModulatedData{pcm16, pcmf32, pcmf32s};
-// }
 
 }  // namespace whisper_ros
