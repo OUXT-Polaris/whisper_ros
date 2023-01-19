@@ -1,0 +1,16 @@
+<launch>
+  <node_container pkg="rclcpp_components" exec="component_container_mt" name="audio_container" namespace="audio" args="">
+    <composable_node pkg="audio_capture" plugin="audio_capture::AudioCaptureNode" name="audio_capture_node" namespace="audio">
+      <param name="dst" value="appsink"/>
+      <param name="device" value=""/>
+      <param name="format" value="wave"/>
+      <param name="bitrate" value="128"/>
+      <param name="channels" value="1"/>
+      <param name="depth" value="16"/>
+      <param name="sampling_rate" value="16000"/>
+      <param name="sample_format" value="S16LE"/>
+      <param name="audio_topic" value="audio"/>
+      <param name="namespace" value="audio"/>
+    </composable_node>
+  </node_container>
+</launch>

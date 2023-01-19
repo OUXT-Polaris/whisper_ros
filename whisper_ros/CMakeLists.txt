@@ -31,7 +31,6 @@ ament_target_dependencies(${PROJECT_NAME}_component whisper_cpp_vendor)
 
 install(DIRECTORY
   launch
-  config
   DESTINATION share/${PROJECT_NAME}/
 )
 
