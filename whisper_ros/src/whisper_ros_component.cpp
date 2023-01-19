@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <ament_index_cpp/get_package_prefix.hpp>
 #include <filesystem>
 #include <whisper_ros/whisper_ros_component.hpp>
 
@@ -31,15 +31,19 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
   if (const auto model_path = findModel()) {
     ctx_ = whisper_init_from_file(model_path.value().c_str());
   } else {
+    RCLCPP_ERROR_STREAM(get_logger(), "Failed to find model " << parameters_.model_type);
     return;
   }
   if (ctx_ == nullptr) {
     RCLCPP_ERROR_STREAM(get_logger(), "error: failed to initialize whisper context");
     return;
   }
-  // rclcpp::QoS durable_qos{1};
-  // durable_qos.transient_local();
   print_segment_callback_pointer_ = &WhisperRosComponent::whisper_print_segment_callback;
+  rclcpp::QoS durable_qos{1};
+  durable_qos.transient_local();
+  audio_info_sub_ = this->create_subscription<audio_common_msgs::msg::AudioInfo>(
+    "audio_info", durable_qos,
+    std::bind(&WhisperRosComponent::audioInfoCallback, this, std::placeholders::_1));
 }
 
 WhisperRosComponent::~WhisperRosComponent() { whisper_free(ctx_); }
@@ -54,11 +58,13 @@ auto WhisperRosComponent::checkLanguage() const -> bool
 
 auto WhisperRosComponent::findModel() const -> std::optional<std::string>
 {
-  std::string model_path = ament_index_cpp::get_package_share_directory("whisper_cpp_vendor") +
+  std::string model_path = ament_index_cpp::get_package_prefix("whisper_cpp_vendor") +
                            "/share/models/ggml-" + parameters_.model_type + ".bin";
+  RCLCPP_INFO_STREAM(get_logger(), "Try loading models from :" << model_path);
   if (std::filesystem::exists(model_path)) {
     return model_path;
   }
+  RCLCPP_WARN_STREAM(get_logger(), "Model file does not exist in " << model_path);
   return std::nullopt;
 }
 
@@ -96,7 +102,7 @@ auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioI
     RCLCPP_ERROR_STREAM(
       get_logger(), "Sample format should be S16LE, current value is " << msg->sample_format);
   }
-  if (msg->coding_format == "wave") {
+  if (msg->coding_format != "wave") {
     RCLCPP_ERROR_STREAM(
       get_logger(), "Coding format should be wave, current format is " << msg->coding_format);
   }

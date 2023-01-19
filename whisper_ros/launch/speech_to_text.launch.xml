@@ -12,5 +12,7 @@
       <param name="audio_topic" value="audio"/>
       <param name="namespace" value="audio"/>
     </composable_node>
+    <composable_node pkg="whisper_ros" plugin="whisper_ros::WhisperRosComponent" name="whisper_ros_node" namespace="audio">
+    </composable_node>
   </node_container>
 </launch>

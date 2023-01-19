@@ -58,6 +58,7 @@ private:
   typedef void (WhisperRosComponent::*PRINT_SEGMENT_CALLBACK_POINTER)(
     whisper_context *, int n_new, void * user_data);
   PRINT_SEGMENT_CALLBACK_POINTER print_segment_callback_pointer_;
+  rclcpp::Subscription<audio_common_msgs::msg::AudioInfo>::SharedPtr audio_info_sub_;
 };
 
 struct whisper_print_user_data
