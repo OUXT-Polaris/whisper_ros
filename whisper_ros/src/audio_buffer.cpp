@@ -127,7 +127,10 @@ auto toInt16(const std::vector<uint8_t> & values) -> std::optional<std::vector<i
 {
   if (values.size() % 2 == 0) {
     std::vector<int16_t> ret;
-    memcpy(ret.data(), values.data(), sizeof(int16_t) * static_cast<size_t>(values.size() / 2));
+    size_t n = static_cast<size_t>(values.size() / 2);
+    ret.resize(n);
+    memcpy(ret.data(), values.data(), sizeof(int16_t) * n);
+    return ret;
   } else {
     return std::nullopt;
   }

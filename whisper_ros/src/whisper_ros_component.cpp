@@ -45,8 +45,7 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
     "audio_info", durable_qos,
     std::bind(&WhisperRosComponent::audioInfoCallback, this, std::placeholders::_1));
   audio_data_sub_ = this->create_subscription<audio_common_msgs::msg::AudioData>(
-    "audio", 10,
-    std::bind(&WhisperRosComponent::audioDataCallback, this, std::placeholders::_1));
+    "audio", 10, std::bind(&WhisperRosComponent::audioDataCallback, this, std::placeholders::_1));
 }
 
 WhisperRosComponent::~WhisperRosComponent() { whisper_free(ctx_); }
@@ -90,7 +89,7 @@ auto WhisperRosComponent::getPromptTokens() const -> std::vector<whisper_token>
 auto WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr msg)
   -> void
 {
-  if(audio_info_) {
+  if (audio_info_) {
     buffer_.append(msg);
     runInference(parameters_, getPromptTokens());
   }
@@ -135,6 +134,7 @@ auto WhisperRosComponent::runInference(
   const auto data = buffer_.modulate(audio_info_.value()->channels);
   if (!data) {
     RCLCPP_WARN_STREAM(get_logger(), "Failed to modulate audio data.");
+    return;
   }
   whisper_print_user_data user_data = {&params, &data.value().pcmf32s};
   auto full_params = getFullParameters(params, tokens);
