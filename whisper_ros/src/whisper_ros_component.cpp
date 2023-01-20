@@ -137,31 +137,31 @@ auto WhisperRosComponent::runInference(
     RCLCPP_WARN_STREAM(get_logger(), "Failed to modulate audio data.");
     return;
   }
-  RCLCPP_ERROR_STREAM(
-    get_logger(), static_cast<int>(data.value().pcmf32.size()) << " data subscribed");
   whisper_print_user_data user_data = {&params, &data.value().pcmf32s};
   auto full_params = getFullParameters(params, tokens);
-  RCLCPP_ERROR_STREAM(get_logger(), __FILE__ << "," << __LINE__);
-  full_params.new_segment_callback =
-    (whisper_new_segment_callback)(this->print_segment_callback_pointer_);
-  RCLCPP_ERROR_STREAM(get_logger(), __FILE__ << "," << __LINE__);
-  full_params.new_segment_callback_user_data = &user_data;
+  // full_params.new_segment_callback =
+  //   (whisper_new_segment_callback)(this->print_segment_callback_pointer_);
+  // full_params.new_segment_callback_user_data = &user_data;
   {
     static bool is_aborted = false;  // NOTE: this should be atomic to avoid data race
-
     full_params.encoder_begin_callback = [](struct whisper_context * /*ctx*/, void * user_data) {
       bool is_aborted = *(bool *)user_data;
       return !is_aborted;
     };
     full_params.encoder_begin_callback_user_data = &is_aborted;
   }
-  RCLCPP_ERROR_STREAM(get_logger(), __FILE__ << "," << __LINE__);
-  if (
-    whisper_full_parallel(
-      ctx_, full_params, data.value().pcmf32.data(), data.value().pcmf32.size(),
-      params.n_processors) != 0) {
-    RCLCPP_ERROR_STREAM(get_logger(), "Failed to process audio.");
+  try {
+    if (
+      whisper_full_parallel(
+        ctx_, full_params, data.value().pcmf32.data(), data.value().pcmf32.size(),
+        params.n_processors) != 0) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to process audio.");
+    }
+  } catch (...) {
+    std::exception_ptr p = std::current_exception();
+    RCLCPP_WARN_STREAM(get_logger(), (p ? p.__cxa_exception_type()->name() : "null"));
   }
+
   RCLCPP_ERROR_STREAM(get_logger(), __FILE__ << "," << __LINE__);
   const int n_segments = whisper_full_n_segments(ctx_);
   RCLCPP_WARN_STREAM(get_logger(), n_segments << " segments detected.");
