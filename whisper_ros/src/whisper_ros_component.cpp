@@ -93,7 +93,6 @@ auto WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioD
     buffer_.append(msg);
     runInference(parameters_, getPromptTokens());
   }
-  // runInference(parameters_, );
 }
 
 auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg)
@@ -156,6 +155,12 @@ auto WhisperRosComponent::runInference(
       params.n_processors) != 0) {
     RCLCPP_ERROR_STREAM(get_logger(), "Failed to process audio.");
   }
+  const int n_segments = whisper_full_n_segments(ctx_);
+  RCLCPP_WARN_STREAM(get_logger(), n_segments << " segments detected.");
+  for (int i = 0; i < n_segments; ++i) {
+      const char * text = whisper_full_get_segment_text(ctx_, i);
+      RCLCPP_ERROR_STREAM(get_logger(), std::string(text));
+  }
 }
 
 /**
@@ -203,6 +208,7 @@ auto WhisperRosComponent::timestampToSample(int64_t t, int n_samples) const -> i
 auto WhisperRosComponent::whisper_print_segment_callback(
   whisper_context * ctx, int n_new, void * user_data) -> void
 {
+  RCLCPP_WARN_STREAM(get_logger(), __FILE__ << "," << __LINE__);
   whisper_ros_msgs::msg::SegmentArrayStamped segment_array_stamped;
   segment_array_stamped.stamp = buffer_.getTimeStamp();
   const auto & params = *((whisper_print_user_data *)user_data)->params;
