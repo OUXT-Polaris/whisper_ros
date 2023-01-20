@@ -47,7 +47,8 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
   audio_data_sub_ = this->create_subscription<audio_common_msgs::msg::AudioData>(
     "audio", 10, std::bind(&WhisperRosComponent::audioDataCallback, this, std::placeholders::_1));
   using namespace std::chrono_literals;
-  timer_ = this->create_wall_timer(5000ms, std::bind(&WhisperRosComponent::timerCallback, this));
+  timer_ = this->create_wall_timer(
+    5000ms, [this]() { return runInference(parameters_, getPromptTokens()); });
 }
 
 WhisperRosComponent::~WhisperRosComponent() { whisper_free(ctx_); }
@@ -96,8 +97,6 @@ auto WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioD
   }
 }
 
-auto WhisperRosComponent::timerCallback() -> void { runInference(parameters_, getPromptTokens()); }
-
 auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg)
   -> void
 {
@@ -142,8 +141,10 @@ auto WhisperRosComponent::runInference(
     get_logger(), static_cast<int>(data.value().pcmf32.size()) << " data subscribed");
   whisper_print_user_data user_data = {&params, &data.value().pcmf32s};
   auto full_params = getFullParameters(params, tokens);
+  RCLCPP_ERROR_STREAM(get_logger(), __FILE__ << "," << __LINE__);
   full_params.new_segment_callback =
     (whisper_new_segment_callback)(this->print_segment_callback_pointer_);
+  RCLCPP_ERROR_STREAM(get_logger(), __FILE__ << "," << __LINE__);
   full_params.new_segment_callback_user_data = &user_data;
   {
     static bool is_aborted = false;  // NOTE: this should be atomic to avoid data race
@@ -154,12 +155,14 @@ auto WhisperRosComponent::runInference(
     };
     full_params.encoder_begin_callback_user_data = &is_aborted;
   }
+  RCLCPP_ERROR_STREAM(get_logger(), __FILE__ << "," << __LINE__);
   if (
     whisper_full_parallel(
       ctx_, full_params, data.value().pcmf32.data(), data.value().pcmf32.size(),
       params.n_processors) != 0) {
     RCLCPP_ERROR_STREAM(get_logger(), "Failed to process audio.");
   }
+  RCLCPP_ERROR_STREAM(get_logger(), __FILE__ << "," << __LINE__);
   const int n_segments = whisper_full_n_segments(ctx_);
   RCLCPP_WARN_STREAM(get_logger(), n_segments << " segments detected.");
   for (int i = 0; i < n_segments; ++i) {
