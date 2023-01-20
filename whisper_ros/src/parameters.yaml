@@ -96,7 +96,7 @@ whisper_ros_node:
   speed_up:
     {
       type: bool,
-      default_value: false,
+      default_value: true,
       read_only: true,
       description: "speed up audio by x2 (reduced accuracy)",
     }

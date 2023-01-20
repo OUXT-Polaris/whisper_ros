@@ -44,6 +44,9 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
   audio_info_sub_ = this->create_subscription<audio_common_msgs::msg::AudioInfo>(
     "audio_info", durable_qos,
     std::bind(&WhisperRosComponent::audioInfoCallback, this, std::placeholders::_1));
+  audio_data_sub_ = this->create_subscription<audio_common_msgs::msg::AudioData>(
+    "audio", 10,
+    std::bind(&WhisperRosComponent::audioDataCallback, this, std::placeholders::_1));
 }
 
 WhisperRosComponent::~WhisperRosComponent() { whisper_free(ctx_); }
@@ -87,8 +90,10 @@ auto WhisperRosComponent::getPromptTokens() const -> std::vector<whisper_token>
 auto WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioData::SharedPtr msg)
   -> void
 {
-  buffer_.append(msg);
-  runInference(parameters_, getPromptTokens());
+  if(audio_info_) {
+    buffer_.append(msg);
+    runInference(parameters_, getPromptTokens());
+  }
   // runInference(parameters_, );
 }
 
@@ -240,6 +245,7 @@ auto WhisperRosComponent::whisper_print_segment_callback(
     }
     segment.text = std::string(whisper_full_get_segment_text(ctx, i));
     segment_array_stamped.segments.emplace_back(segment);
+    RCLCPP_INFO_STREAM(get_logger(), "Speech detected : " << segment.text);
   }
 }
 }  // namespace whisper_ros
