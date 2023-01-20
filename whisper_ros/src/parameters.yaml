@@ -20,7 +20,7 @@ whisper_ros_node:
   audio_buffer_length:
     {
       type: int,
-      default_value: 16384,
+      default_value: 262144,
       description: "buffer length of raw audio data (uint8)",
       read_only: true,
       validation: { lower_bounds<>: [1] },

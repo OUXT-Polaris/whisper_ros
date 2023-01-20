@@ -48,12 +48,13 @@ public:
   const bool diarize;
   auto append(const audio_common_msgs::msg::AudioData::SharedPtr msg) -> std::vector<uint8_t>;
   auto getTimeStamp() const -> rclcpp::Time;
-  auto modulate(size_t num_channels) const -> std::optional<ModulatedData>;
+  auto modulate(size_t num_channels) -> std::optional<ModulatedData>;
 
 private:
   const rclcpp::Clock::SharedPtr clock_;
   std::vector<uint8_t> raw_data_;
   rclcpp::Time timestamp_;
+  std::mutex mtx_;
 };
 }  // namespace whisper_ros
 

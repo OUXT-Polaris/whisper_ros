@@ -51,6 +51,8 @@ private:
     -> whisper_full_params;
   auto whisper_print_segment_callback(whisper_context * ctx, int n_new, void * user_data) -> void;
   auto timestampToSample(int64_t t, int n_samples) const -> int;
+  auto timerCallback() -> void;
+  rclcpp::TimerBase::SharedPtr timer_;
   const whisper_ros_node::Params parameters_;
   AudioBuffer buffer_;
   std::optional<audio_common_msgs::msg::AudioInfo::SharedPtr> audio_info_;

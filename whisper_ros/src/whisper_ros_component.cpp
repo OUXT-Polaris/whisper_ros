@@ -46,6 +46,8 @@ WhisperRosComponent::WhisperRosComponent(const rclcpp::NodeOptions & options)
     std::bind(&WhisperRosComponent::audioInfoCallback, this, std::placeholders::_1));
   audio_data_sub_ = this->create_subscription<audio_common_msgs::msg::AudioData>(
     "audio", 10, std::bind(&WhisperRosComponent::audioDataCallback, this, std::placeholders::_1));
+  using namespace std::chrono_literals;
+  timer_ = this->create_wall_timer(5000ms, std::bind(&WhisperRosComponent::timerCallback, this));
 }
 
 WhisperRosComponent::~WhisperRosComponent() { whisper_free(ctx_); }
@@ -91,9 +93,10 @@ auto WhisperRosComponent::audioDataCallback(const audio_common_msgs::msg::AudioD
 {
   if (audio_info_) {
     buffer_.append(msg);
-    runInference(parameters_, getPromptTokens());
   }
 }
+
+auto WhisperRosComponent::timerCallback() -> void { runInference(parameters_, getPromptTokens()); }
 
 auto WhisperRosComponent::audioInfoCallback(const audio_common_msgs::msg::AudioInfo::SharedPtr msg)
   -> void
@@ -135,6 +138,8 @@ auto WhisperRosComponent::runInference(
     RCLCPP_WARN_STREAM(get_logger(), "Failed to modulate audio data.");
     return;
   }
+  RCLCPP_ERROR_STREAM(
+    get_logger(), static_cast<int>(data.value().pcmf32.size()) << " data subscribed");
   whisper_print_user_data user_data = {&params, &data.value().pcmf32s};
   auto full_params = getFullParameters(params, tokens);
   full_params.new_segment_callback =
@@ -158,8 +163,8 @@ auto WhisperRosComponent::runInference(
   const int n_segments = whisper_full_n_segments(ctx_);
   RCLCPP_WARN_STREAM(get_logger(), n_segments << " segments detected.");
   for (int i = 0; i < n_segments; ++i) {
-      const char * text = whisper_full_get_segment_text(ctx_, i);
-      RCLCPP_ERROR_STREAM(get_logger(), std::string(text));
+    const char * text = whisper_full_get_segment_text(ctx_, i);
+    RCLCPP_ERROR_STREAM(get_logger(), std::string(text));
   }
 }
 

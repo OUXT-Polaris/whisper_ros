@@ -38,6 +38,7 @@ AudioBuffer::AudioBuffer(
 auto AudioBuffer::append(const audio_common_msgs::msg::AudioData::SharedPtr msg)
   -> std::vector<uint8_t>
 {
+  std::lock_guard<std::mutex> lock(mtx_);
   timestamp_ = clock_->now();
   if (msg->data.size() >= buffer_length) {
     raw_data_.clear();
@@ -57,9 +58,11 @@ auto AudioBuffer::append(const audio_common_msgs::msg::AudioData::SharedPtr msg)
 
 auto AudioBuffer::getTimeStamp() const -> rclcpp::Time { return timestamp_; }
 
-auto AudioBuffer::modulate(size_t num_channels) const -> std::optional<ModulatedData>
+auto AudioBuffer::modulate(size_t num_channels) -> std::optional<ModulatedData>
 {
+  std::lock_guard<std::mutex> lock(mtx_);
   const auto pcm16 = toInt16(raw_data_);
+  raw_data_.clear();
   if (!pcm16) {
     return std::nullopt;
   }
