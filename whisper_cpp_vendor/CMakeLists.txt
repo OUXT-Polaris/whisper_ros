@@ -13,10 +13,6 @@ macro(download_model MODEL_TYPE)
     COMMAND bash ${WHISPER_SRC_DIR}/models/download-ggml-model.sh ${MODEL_TYPE}
     WORKING_DIRECTORY ${WHISPER_SRC_DIR}
   )
-  install(
-    FILES ${WHISPER_SRC_DIR}/models/ggml-${MODEL_TYPE}.bin
-    DESTINATION share/models
-  )
 endmacro()
 
 macro(build_whisper_cpp)
@@ -24,6 +20,7 @@ macro(build_whisper_cpp)
   set(cmake_configure_args -Wno-dev)
   set(cmake_configure_args -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install)
   set(WHISPER_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/whisper_cpp-ext-prefix/src/whisper_cpp-ext)
+  set(WHISPER_MODELS)
 
   include(ExternalProject)
   externalproject_add(whisper_cpp-ext
@@ -55,6 +52,13 @@ macro(build_whisper_cpp)
   download_model(medium)
   download_model(large-v1)
   download_model(large)
+
+  install(
+    DIRECTORY
+      ${WHISPER_SRC_DIR}/models
+    DESTINATION
+      share/models
+  )
 
   ament_export_libraries(whisper)
 
