@@ -17,13 +17,18 @@ jobs:
     name: BuildTest
     runs-on: ubuntu-22.04
     timeout-minutes: 180
-    container: ros:${{ matrix.rosdistro }}
+    container:
+      image: ${{ matrix.docker_image }}
     env:
       DEBIAN_FRONTEND: noninteractive
+      ROS_DISTRO: ${{ matrix.rosdistro }}
     strategy:
       fail-fast: false
       matrix:
-        rosdistro: [humble]
+        include:
+          # Humble Hawksbill (May 2022 - May 2027)
+          - docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
+            rosdistro: humble
     steps:
       - uses: actions/checkout@v2-beta
         with:
@@ -34,6 +39,7 @@ jobs:
           package-name: whisper_ros
           target-ros2-distro: ${{ matrix.rosdistro }}
           vcs-repo-file-url: dependency.repos
+          extra-cmake-args: -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           colcon-defaults: |
             {
               "build": {
