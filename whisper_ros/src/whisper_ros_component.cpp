@@ -138,7 +138,6 @@ auto WhisperRosComponent::runInference(
   }
   whisper_ros_msgs::msg::SegmentArrayStamped segment_array_stamped;
   segment_array_stamped.stamp = buffer_.getTimeStamp();
-  whisper_print_user_data user_data = {&params, &data.value().pcmf32s};
   auto full_params = getFullParameters(params, tokens);
   {
     static bool is_aborted = false;  // NOTE: this should be atomic to avoid data race
