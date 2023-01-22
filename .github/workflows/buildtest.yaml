@@ -30,10 +30,22 @@ jobs:
           - docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
             rosdistro: humble
     steps:
-      - uses: actions/checkout@v2-beta
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: workaround for jammy
+        if: ${{ matrix.rosdistro == 'humble' }}
+        run: |
+          apt remove libunwind-14-dev -y
+          apt install python3-nose -y
+          pip uninstall nose -y
+      - name: Search packages in this repository
+        id: list_packages
+        run: |
+          echo ::set-output name=package_list::$(colcon list --names-only | sed -e ':loop; N; $!b loop; s/\n/ /g')
+      - name: Show target packages
+        run: |
+          echo "Target packages: ${{ steps.list_packages.outputs.package_list }}"
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
           package-name: whisper_ros
