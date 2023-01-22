@@ -1,0 +1,50 @@
+name: BuildTest
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 0 * * *
+  pull_request:
+    paths:
+      - '**'
+      - '!docs/**'
+  push:
+    branches:
+      - master
+
+jobs:
+  build_test:
+    name: BuildTest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    container: ros:${{ matrix.rosdistro }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    strategy:
+      fail-fast: false
+      matrix:
+        rosdistro: [humble]
+    steps:
+      - uses: actions/checkout@v2-beta
+        with:
+          fetch-depth: 0
+      - uses: ros-tooling/action-ros-ci@v0.2
+        with:
+          package-name: whisper_ros
+          target-ros2-distro: ${{ matrix.rosdistro }}
+          vcs-repo-file-url: dependency.repos
+          colcon-defaults: |
+            {
+              "build": {
+                "mixin": ["coverage-gcc", "coverage-pytest"]
+              },
+              "test": {
+                "mixin": ["coverage-pytest"]
+              }
+            }
+          colcon-mixin-repository: https://raw.githubusercontent.com/colcon/colcon-mixin-repository/1ddb69bedfd1f04c2f000e95452f7c24a4d6176b/index.yaml
+      # - uses: codecov/codecov-action@v1.2.1
+      #   with:
+      #     files: ros_ws/lcov/total_coverage.info,ros_ws/coveragepy/.coverage
+      #     flags: unittests
+      #     name: codecov-umbrella
