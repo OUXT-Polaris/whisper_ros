@@ -59,12 +59,6 @@ private:
   rclcpp::Subscription<audio_common_msgs::msg::AudioData>::SharedPtr audio_data_sub_;
   rclcpp::Subscription<audio_common_msgs::msg::AudioInfo>::SharedPtr audio_info_sub_;
 };
-
-struct whisper_print_user_data
-{
-  const whisper_ros_node::Params * params;
-  const std::vector<std::vector<float>> * pcmf32s;
-};
 }  // namespace whisper_ros
 
 #endif  // WHISPER_ROS__WHISPER_ROS_COMPONENT_HPP_
