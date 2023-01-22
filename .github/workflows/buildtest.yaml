@@ -58,7 +58,7 @@ jobs:
           echo "Target packages: ${{ steps.list_packages.outputs.package_list }}"
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
-          package-name: whisper_ros
+          package-name: ${{ steps.list_packages.outputs.package_list }}
           target-ros2-distro: ${{ matrix.rosdistro }}
           vcs-repo-file-url: dependency.repos
           extra-cmake-args: -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
