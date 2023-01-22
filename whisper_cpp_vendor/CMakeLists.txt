@@ -8,13 +8,6 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
-macro(download_model MODEL_TYPE)
-  execute_process(
-    COMMAND bash ${WHISPER_SRC_DIR}/models/download-ggml-model.sh ${MODEL_TYPE}
-    WORKING_DIRECTORY ${WHISPER_SRC_DIR}
-  )
-endmacro()
-
 macro(build_whisper_cpp)
   set(cmake_commands)
   set(cmake_configure_args -Wno-dev)
@@ -27,7 +20,7 @@ macro(build_whisper_cpp)
     GIT_REPOSITORY https://github.com/ggerganov/whisper.cpp.git
     GIT_TAG 1.1.0
     TIMEOUT 6000
-    ${cmake_commands}
+      ${cmake_commands}
     CMAKE_ARGS
       ${cmake_configure_args}
   )
@@ -42,22 +35,9 @@ macro(build_whisper_cpp)
     FILES ${WHISPER_SRC_DIR}/ggml.h ${WHISPER_SRC_DIR}/whisper.h ${WHISPER_SRC_DIR}/examples/dr_wav.h
     DESTINATION include
   )
-  download_model(tiny.en)
-  download_model(tiny)
-  download_model(base.en)
-  download_model(base)
-  download_model(small.en)
-  download_model(small)
-  download_model(medium.en)
-  download_model(medium)
-  download_model(large-v1)
-  download_model(large)
-
   install(
-    DIRECTORY
-      ${WHISPER_SRC_DIR}/models
-    DESTINATION
-      share/models
+    FILES ${WHISPER_SRC_DIR}/models/download-ggml-model.sh
+    DESTINATION share/scripts
   )
 
   ament_export_libraries(whisper)

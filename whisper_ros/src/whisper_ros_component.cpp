@@ -63,7 +63,7 @@ auto WhisperRosComponent::checkLanguage() const -> bool
 
 auto WhisperRosComponent::findModel() const -> std::optional<std::string>
 {
-  std::string model_path = ament_index_cpp::get_package_prefix("whisper_cpp_vendor") +
+  std::string model_path = ament_index_cpp::get_package_prefix("whisper_ros") +
                            "/share/models/ggml-" + parameters_.model_type + ".bin";
   RCLCPP_INFO_STREAM(get_logger(), "Try loading models from :" << model_path);
   if (std::filesystem::exists(model_path)) {

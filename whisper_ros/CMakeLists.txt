@@ -29,8 +29,35 @@ rclcpp_components_register_nodes(${PROJECT_NAME}_component
 
 ament_target_dependencies(${PROJECT_NAME}_component whisper_cpp_vendor)
 
+execute_process(
+  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/models
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+macro(download_model MODEL_TYPE)
+  execute_process(
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/download-ggml-model.sh ${MODEL_TYPE}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/scripts
+  )
+  install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/ggml-${MODEL_TYPE}.bin
+    DESTINATION share/models
+  )
+endmacro()
+
+download_model(tiny.en)
+download_model(tiny)
+download_model(base.en)
+download_model(base)
+download_model(small.en)
+download_model(small)
+download_model(medium.en)
+download_model(medium)
+download_model(large-v1)
+download_model(large)
+
 install(DIRECTORY
-  launch
+  launch scripts
   DESTINATION share/${PROJECT_NAME}/
 )
 
