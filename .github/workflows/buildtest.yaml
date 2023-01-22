@@ -22,6 +22,8 @@ jobs:
     env:
       DEBIAN_FRONTEND: noninteractive
       ROS_DISTRO: ${{ matrix.rosdistro }}
+      CCACHE_DIR: /home/rosbuild/.ccache
+      USE_CCACHE: 1
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +35,11 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: /home/rosbuild/.ccache
+          key: ${{ matrix.rosdistro }}-ccache
       - name: workaround for jammy
         if: ${{ matrix.rosdistro == 'humble' }}
         run: |
