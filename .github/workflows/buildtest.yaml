@@ -26,8 +26,6 @@ jobs:
         rosdistro: [humble]
     steps:
       - uses: actions/checkout@v2-beta
-        with:
-          fetch-depth: 0
       - uses: ros-tooling/action-ros-ci@v0.2
         with:
           package-name: whisper_ros
