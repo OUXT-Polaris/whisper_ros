@@ -54,7 +54,7 @@ WhisperRosComponent::~WhisperRosComponent() { whisper_free(ctx_); }
 
 auto WhisperRosComponent::checkLanguage() const -> bool
 {
-  if (parameters_.language == "auto" && whisper_lang_id(parameters_.language.c_str()) == -1) {
+  if (parameters_.language != "auto" && whisper_lang_id(parameters_.language.c_str()) == -1) {
     return false;
   }
   return true;
