@@ -56,17 +56,8 @@ private:
   AudioBuffer buffer_;
   std::optional<audio_common_msgs::msg::AudioInfo::SharedPtr> audio_info_;
   struct whisper_context * ctx_;
-  typedef void (WhisperRosComponent::*PRINT_SEGMENT_CALLBACK_POINTER)(
-    whisper_context *, int n_new, void * user_data);
-  PRINT_SEGMENT_CALLBACK_POINTER print_segment_callback_pointer_;
   rclcpp::Subscription<audio_common_msgs::msg::AudioData>::SharedPtr audio_data_sub_;
   rclcpp::Subscription<audio_common_msgs::msg::AudioInfo>::SharedPtr audio_info_sub_;
-};
-
-struct whisper_print_user_data
-{
-  const whisper_ros_node::Params * params;
-  const std::vector<std::vector<float>> * pcmf32s;
 };
 }  // namespace whisper_ros
 
