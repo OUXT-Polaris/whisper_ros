@@ -9,7 +9,7 @@ on:
     types: [labeled]
 
 jobs:
-  test:
+  review:
     runs-on: ubuntu-latest
     if: |
       !contains(github.event.issue.labels.*.name, 'review')
