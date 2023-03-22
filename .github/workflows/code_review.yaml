@@ -16,7 +16,7 @@ jobs:
       - uses: anc95/ChatGPT-CodeReview@v1.0.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: hogehogefugafuga
           # Optional
           LANGUAGE: English
           MODEL: gpt-3.5-turbo
