@@ -12,7 +12,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: anc95/ChatGPT-CodeReview@v1.0.3
+      - uses: OUXT-Polaris/ChatGPT-CodeReview@feature/check_organization_secret
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
