@@ -6,13 +6,12 @@ permissions:
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [review_requested]
 
 jobs:
   review:
     runs-on: ubuntu-latest
-    if: |
-      !contains(github.event.issue.labels.*.name, 'review')
+    if: ${{ github.event.requested_reviewer.login == 'wam-v-tan' }}
     steps:
       - uses: anc95/ChatGPT-CodeReview@v1.0.3
         env:
