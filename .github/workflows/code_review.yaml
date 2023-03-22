@@ -12,12 +12,13 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: OUXT-Polaris/ChatGPT-CodeReview@feature/check_organization_secret
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          # Optional
-          LANGUAGE: English
-          MODEL: gpt-3.5-turbo
-          top_p: 1
-          temperature: 1
+      - name: ChatGTP explain code
+        uses: OUXT-Polaris/chatgpt-github-actions@feature/review
+        with:
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_pr_id: ${{ github.event.number }}
+          openai_engine: "text-davinci-002" #optional
+          openai_temperature: 0.5 #optional
+          openai_max_tokens: 2048 #optional
+          mode: review
